@@ -1,0 +1,203 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.app { width: 100%; max-width: 390px; margin: 0 auto; background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); overflow: hidden; font-family: var(--font-sans); }
+.top-bar { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.top-bar h1 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.loc-pill { font-size: 12px; color: var(--color-text-secondary); background: var(--color-background-secondary); padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 4px; }
+.filter-row { display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; scrollbar-width: none; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.filter-row::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); white-space: nowrap; transition: all 0.15s; }
+.chip.on { background: #E1F5EE; border-color: #1D9E75; color: #0F6E56; }
+.map-area { position: relative; width: 100%; height: 320px; background: #EAF3DE; overflow: hidden; }
+.map-svg { width: 100%; height: 100%; }
+.map-pin { cursor: pointer; transition: transform 0.15s; transform-origin: center; }
+.map-pin:hover { transform: scale(1.15); }
+.map-pin.active .pin-bubble { stroke: #0F6E56; stroke-width: 2; }
+.pin-bubble { rx: 12; }
+.you-dot { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { r: 7; opacity: 1; } 50% { r: 10; opacity: 0.6; } }
+.bottom-sheet { background: var(--color-background-primary); border-top: 0.5px solid var(--color-border-tertiary); }
+.sheet-handle { width: 36px; height: 4px; background: var(--color-border-secondary); border-radius: 2px; margin: 8px auto 0; }
+.bar-preview { padding: 12px 16px 16px; }
+.bar-preview.hidden { display: none; }
+.bar-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.bar-scroll::-webkit-scrollbar { display: none; }
+.bar-mini { flex-shrink: 0; width: 200px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px; cursor: pointer; transition: border-color 0.15s; background: var(--color-background-primary); }
+.bar-mini.selected { border-color: #1D9E75; border-width: 1.5px; }
+.bar-mini-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.bar-mini-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; }
+.bar-mini-type { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.score { font-size: 18px; font-weight: 500; color: #1D9E75; }
+.mini-stats { display: flex; gap: 6px; }
+.mini-stat { flex: 1; background: var(--color-background-secondary); border-radius: 6px; padding: 5px 6px; }
+.mini-stat-label { font-size: 9px; color: var(--color-text-tertiary); margin-bottom: 1px; }
+.mini-stat-val { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+.mini-stat-val.g { color: #1D9E75; }
+.mini-stat-val.y { color: #BA7517; }
+.mini-stat-val.r { color: #E24B4A; }
+.friends-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.av { width: 20px; height: 20px; border-radius: 50%; font-size: 8px; font-weight: 500; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--color-background-primary); margin-left: -5px; }
+.av:first-child { margin-left: 0; }
+.av-b { background: #B5D4F4; color: #0C447C; }
+.av-p { background: #F4C0D1; color: #72243E; }
+.av-g { background: #C0DD97; color: #3B6D11; }
+.av-o { background: #FAC775; color: #633806; }
+.friends-text { font-size: 11px; color: var(--color-text-secondary); }
+.live-dot { width: 6px; height: 6px; background: #E24B4A; border-radius: 50%; display: inline-block; margin-right: 3px; }
+.legend { display: flex; gap: 12px; align-items: center; padding: 8px 16px 10px; border-top: 0.5px solid var(--color-border-tertiary); flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Barbuddy map view showing nearby bars with live vibe ratings</h2>
+<div class="app">
+  <div class="top-bar">
+    <h1>Map view</h1>
+    <div class="loc-pill">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="5" r="2" fill="#1D9E75"/><path d="M6 1C3.79 1 2 2.79 2 5c0 3 4 6 4 6s4-3 4-6c0-2.21-1.79-4-4-4z" fill="#1D9E75" opacity="0.3"/></svg>
+      Fort Mill, SC
+    </div>
+  </div>
+  <div class="filter-row">
+    <button class="chip on" onclick="filterBars('all',this)">All (4)</button>
+    <button class="chip" onclick="filterBars('nocover',this)">No cover</button>
+    <button class="chip" onclick="filterBars('shortline',this)">Short wait</button>
+    <button class="chip" onclick="filterBars('friends',this)">Friends here</button>
+  </div>
+
+  <div class="map-area">
+    <svg class="map-svg" viewBox="0 0 390 320" xmlns="http://www.w3.org/2000/svg" id="mapsvg">
+      <rect width="390" height="320" fill="#EAF3DE"/>
+      <rect x="0" y="80" width="390" height="2" fill="#C0DD97" opacity="0.6"/>
+      <rect x="0" y="160" width="390" height="2" fill="#C0DD97" opacity="0.6"/>
+      <rect x="0" y="240" width="390" height="2" fill="#C0DD97" opacity="0.6"/>
+      <rect x="80" y="0" width="2" height="320" fill="#C0DD97" opacity="0.6"/>
+      <rect x="195" y="0" width="2" height="320" fill="#C0DD97" opacity="0.6"/>
+      <rect x="310" y="0" width="2" height="320" fill="#C0DD97" opacity="0.6"/>
+      <rect x="30" y="50" width="120" height="8" rx="4" fill="#B4B2A9" opacity="0.5"/>
+      <rect x="60" y="110" width="80" height="8" rx="4" fill="#B4B2A9" opacity="0.5"/>
+      <rect x="180" y="90" width="140" height="8" rx="4" fill="#B4B2A9" opacity="0.5"/>
+      <rect x="240" y="200" width="100" height="8" rx="4" fill="#B4B2A9" opacity="0.5"/>
+      <rect x="50" y="200" width="90" height="8" rx="4" fill="#B4B2A9" opacity="0.5"/>
+      <rect x="100" y="260" width="180" height="8" rx="4" fill="#B4B2A9" opacity="0.5"/>
+      <rect x="10" y="140" width="60" height="8" rx="4" fill="#B4B2A9" opacity="0.3"/>
+      <rect x="320" y="130" width="60" height="8" rx="4" fill="#B4B2A9" opacity="0.3"/>
+
+      <circle class="you-dot" cx="195" cy="180" r="7" fill="#185FA5" opacity="0.9"/>
+      <circle cx="195" cy="180" r="14" fill="#185FA5" opacity="0.15"/>
+      <text x="195" y="202" text-anchor="middle" font-size="9" fill="#0C447C" font-family="sans-serif">You</text>
+
+      <g class="map-pin active" id="pin-0" onclick="selectBar(0)">
+        <rect x="104" y="95" width="56" height="28" rx="14" fill="#1D9E75"/>
+        <text x="132" y="114" text-anchor="middle" font-size="12" font-weight="500" fill="#E1F5EE" font-family="sans-serif">8.4</text>
+        <polygon points="132,127 127,122 137,122" fill="#1D9E75"/>
+        <text x="132" y="142" text-anchor="middle" font-size="9" fill="#0F6E56" font-family="sans-serif">Rusty Anchor</text>
+      </g>
+
+      <g class="map-pin" id="pin-1" onclick="selectBar(1)">
+        <rect x="256" y="52" width="56" height="28" rx="14" fill="#1D9E75"/>
+        <text x="284" y="71" text-anchor="middle" font-size="12" font-weight="500" fill="#E1F5EE" font-family="sans-serif">9.1</text>
+        <polygon points="284,84 279,79 289,79" fill="#1D9E75"/>
+        <text x="284" y="100" text-anchor="middle" font-size="9" fill="#0F6E56" font-family="sans-serif">Craft &amp; Crown</text>
+      </g>
+
+      <g class="map-pin" id="pin-2" onclick="selectBar(2)">
+        <rect x="52" y="210" width="56" height="28" rx="14" fill="#BA7517"/>
+        <text x="80" y="229" text-anchor="middle" font-size="12" font-weight="500" fill="#FAEEDA" font-family="sans-serif">7.8</text>
+        <polygon points="80,242 75,237 85,237" fill="#BA7517"/>
+        <text x="80" y="257" text-anchor="middle" font-size="9" fill="#854F0B" font-family="sans-serif">Neon Patio</text>
+      </g>
+
+      <g class="map-pin" id="pin-3" onclick="selectBar(3)">
+        <rect x="296" y="220" width="56" height="28" rx="14" fill="#1D9E75"/>
+        <text x="324" y="239" text-anchor="middle" font-size="12" font-weight="500" fill="#E1F5EE" font-family="sans-serif">8.9</text>
+        <polygon points="324,252 319,247 329,247" fill="#1D9E75"/>
+        <text x="324" y="267" text-anchor="middle" font-size="9" fill="#0F6E56" font-family="sans-serif">Barrel &amp; Vine</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#1D9E75;"></div>High vibe (8+)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#BA7517;"></div>Mid vibe (6-7)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E24B4A;"></div>Low vibe (&lt;6)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#185FA5;"></div>You</div>
+  </div>
+
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="bar-preview" id="bar-preview">
+      <div style="font-size:11px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
+        <span class="live-dot"></span>Live nearby · 4 bars
+      </div>
+      <div class="bar-scroll" id="bar-scroll"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const bars = [
+  { name: 'The Rusty Anchor', type: 'Sports bar · 0.3 mi', score: 8.4, line: 'None', cover: 'Free', price: '$$', lineClass: 'g', coverClass: 'g', priceClass: 'y', friends: ['JR','KM'], friendClasses: ['av-b','av-p'], friendCount: '2 friends here' },
+  { name: 'Craft & Crown', type: 'Craft cocktails · 0.6 mi', score: 9.1, line: '~10 min', cover: '$10', price: '$$$', lineClass: 'y', coverClass: 'r', priceClass: 'r', friends: ['TL','AS','BP'], friendClasses: ['av-g','av-o','av-b'], friendCount: '3 friends here' },
+  { name: 'Neon Patio', type: 'Rooftop · 1.1 mi', score: 7.8, line: '30+ min', cover: '$5', price: '$$', lineClass: 'r', coverClass: 'y', priceClass: 'y', friends: ['ML'], friendClasses: ['av-p'], friendCount: '1 friend here' },
+  { name: 'Barrel & Vine', type: 'Wine bar · 1.4 mi', score: 8.9, line: 'None', cover: 'Free', price: '$$', lineClass: 'g', coverClass: 'g', priceClass: 'y', friends: [], friendClasses: [], friendCount: 'No friends yet' }
+];
+
+let selectedBar = 0;
+let visibleBars = [0,1,2,3];
+
+function renderCards() {
+  const scroll = document.getElementById('bar-scroll');
+  scroll.innerHTML = '';
+  visibleBars.forEach(i => {
+    const b = bars[i];
+    const card = document.createElement('div');
+    card.className = 'bar-mini' + (i === selectedBar ? ' selected' : '');
+    card.onclick = () => selectBar(i);
+    let avatars = b.friends.map((f, j) => `<div class="av ${b.friendClasses[j]}">${f}</div>`).join('');
+    card.innerHTML = `
+      <div class="bar-mini-top">
+        <div><div class="bar-mini-name">${b.name}</div><div class="bar-mini-type">${b.type}</div></div>
+        <div class="score">${b.score}</div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="mini-stat-label">Line</div><div class="mini-stat-val ${b.lineClass}">${b.line}</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Cover</div><div class="mini-stat-val ${b.coverClass}">${b.cover}</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Price</div><div class="mini-stat-val ${b.priceClass}">${b.price}</div></div>
+      </div>
+      <div class="friends-row">
+        <div style="display:flex;">${avatars}</div>
+        <span class="friends-text">${b.friendCount}</span>
+      </div>`;
+    scroll.appendChild(card);
+  });
+}
+
+function selectBar(i) {
+  selectedBar = i;
+  document.querySelectorAll('.map-pin').forEach((p,j) => p.classList.toggle('active', j === i));
+  renderCards();
+  const scroll = document.getElementById('bar-scroll');
+  const cards = scroll.querySelectorAll('.bar-mini');
+  const idx = visibleBars.indexOf(i);
+  if (idx >= 0 && cards[idx]) cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+}
+
+function filterBars(type, btn) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  btn.classList.add('on');
+  if (type === 'all') visibleBars = [0,1,2,3];
+  else if (type === 'nocover') visibleBars = [0,3];
+  else if (type === 'shortline') visibleBars = [0,1,3];
+  else if (type === 'friends') visibleBars = [0,1,2];
+  document.querySelectorAll('.map-pin').forEach((p,i) => {
+    p.style.opacity = visibleBars.includes(i) ? '1' : '0.25';
+  });
+  document.querySelector('.live-dot').nextSibling.textContent = ` Live nearby · ${visibleBars.length} bar${visibleBars.length !== 1 ? 's' : ''}`;
+  if (!visibleBars.includes(selectedBar)) selectedBar = visibleBars[0];
+  renderCards();
+}
+
+renderCards();
+</script>

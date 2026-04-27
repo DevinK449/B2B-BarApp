@@ -1,0 +1,557 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: transparent; }
+  .app { width: 100%; max-width: 390px; margin: 0 auto; background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); overflow: hidden; min-height: 680px; display: flex; flex-direction: column; }
+  .nav { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
+  .nav-btn { flex: 1; padding: 10px 4px 8px; font-size: 11px; color: var(--color-text-tertiary); background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: var(--font-sans); transition: color 0.15s; }
+  .nav-btn.active { color: #1D9E75; }
+  .nav-icon { font-size: 18px; }
+  .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* Discover screen */
+  .top-bar { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: center; }
+  .top-bar h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .location-pill { font-size: 12px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px; background: var(--color-background-secondary); padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); }
+  .filter-row { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip { flex-shrink: 0; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); transition: all 0.15s; white-space: nowrap; }
+  .filter-chip.on { background: #E1F5EE; border-color: #1D9E75; color: #0F6E56; }
+  .bar-list { flex: 1; overflow-y: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .bar-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px; cursor: pointer; transition: border-color 0.15s; }
+  .bar-card:hover { border-color: var(--color-border-secondary); }
+  .bar-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .bar-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+  .bar-type { font-size: 12px; color: var(--color-text-tertiary); margin-top: 1px; }
+  .vibe-score { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .score-num { font-size: 20px; font-weight: 500; color: #1D9E75; line-height: 1; }
+  .score-label { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .bar-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .stat-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 7px 8px; }
+  .stat-label { font-size: 10px; color: var(--color-text-tertiary); margin-bottom: 2px; }
+  .stat-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-val.good { color: #1D9E75; }
+  .stat-val.mid { color: #BA7517; }
+  .stat-val.bad { color: #E24B4A; }
+  .bar-footer { display: flex; justify-content: space-between; align-items: center; }
+  .friends-here { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); }
+  .avatar-stack { display: flex; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--color-background-primary); font-size: 9px; font-weight: 500; display: flex; align-items: center; justify-content: center; margin-left: -6px; }
+  .avatar:first-child { margin-left: 0; }
+  .av1 { background: #B5D4F4; color: #0C447C; }
+  .av2 { background: #F4C0D1; color: #72243E; }
+  .av3 { background: #C0DD97; color: #3B6D11; }
+  .av4 { background: #FAC775; color: #633806; }
+  .live-badge { font-size: 10px; background: #FCEBEB; color: #A32D2D; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
+
+  /* Rate screen */
+  .rate-header { padding: 14px 16px 10px; }
+  .rate-header h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .rate-header p { font-size: 13px; color: var(--color-text-secondary); }
+  .search-box { margin: 0 16px 14px; display: flex; align-items: center; gap: 8px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 8px 12px; }
+  .search-box input { flex: 1; background: none; border: none; outline: none; font-size: 14px; color: var(--color-text-primary); font-family: var(--font-sans); }
+  .search-box input::placeholder { color: var(--color-text-tertiary); }
+  .rate-bar-pick { margin: 0 16px 16px; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px; border: 0.5px solid #5DCAA5; }
+  .rating-section { padding: 0 16px; }
+  .rating-item { margin-bottom: 20px; }
+  .rating-item-label { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .slider-wrap { position: relative; }
+  .slider-wrap input[type=range] { width: 100%; }
+  .slider-ticks { display: flex; justify-content: space-between; margin-top: 4px; }
+  .tick { font-size: 10px; color: var(--color-text-tertiary); }
+  .submit-btn { margin: 16px 16px 0; width: calc(100% - 32px); padding: 12px; background: #1D9E75; color: #E1F5EE; border: none; border-radius: var(--border-radius-md); font-size: 15px; font-weight: 500; cursor: pointer; font-family: var(--font-sans); transition: opacity 0.15s; }
+  .submit-btn:hover { opacity: 0.9; }
+  .success-msg { display: none; margin: 12px 16px 0; background: #E1F5EE; border: 0.5px solid #5DCAA5; border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; color: #0F6E56; text-align: center; }
+
+  /* Recommend screen */
+  .rec-header { padding: 14px 16px 10px; }
+  .rec-header h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .rec-header p { font-size: 13px; color: var(--color-text-secondary); }
+  .pref-section { padding: 0 16px; flex: 1; overflow-y: auto; }
+  .pref-group { margin-bottom: 18px; }
+  .pref-group-label { font-size: 12px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .pref-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pref-chip { font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); transition: all 0.15s; }
+  .pref-chip.sel { background: #E1F5EE; border-color: #1D9E75; color: #0F6E56; }
+  .recs-out { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .rec-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 13px; display: flex; gap: 12px; align-items: center; }
+  .rec-rank { font-size: 22px; font-weight: 500; color: var(--color-border-secondary); min-width: 28px; }
+  .rec-info { flex: 1; }
+  .rec-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .rec-tags { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .rec-match { font-size: 13px; font-weight: 500; color: #1D9E75; }
+  .find-btn { margin: 0 16px 16px; padding: 12px; background: #1D9E75; color: #E1F5EE; border: none; border-radius: var(--border-radius-md); font-size: 15px; font-weight: 500; cursor: pointer; font-family: var(--font-sans); transition: opacity 0.15s; width: calc(100% - 32px); }
+  .find-btn:hover { opacity: 0.9; }
+
+  /* Friends screen */
+  .friends-header { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: center; }
+  .friends-header h2 { font-size: 18px; font-weight: 500; }
+  .invite-btn { font-size: 12px; color: #1D9E75; background: none; border: 0.5px solid #5DCAA5; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-family: var(--font-sans); }
+  .activity-feed { flex: 1; overflow-y: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .activity-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px; }
+  .act-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .act-avatar { width: 36px; height: 36px; border-radius: 50%; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .act-meta { flex: 1; }
+  .act-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .act-time { font-size: 11px; color: var(--color-text-tertiary); }
+  .act-body { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+  .act-bar-ref { font-weight: 500; color: var(--color-text-primary); }
+  .act-ratings { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .act-rating-pill { font-size: 11px; background: var(--color-background-secondary); border-radius: 10px; padding: 3px 9px; color: var(--color-text-secondary); }
+  .join-btn { margin-top: 10px; width: 100%; padding: 8px; background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 13px; color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); transition: all 0.15s; }
+  .join-btn:hover { background: var(--color-background-secondary); }
+</style>
+
+<div class="app">
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showScreen('discover',this)">
+      <span class="nav-icon">🗺</span>Discover
+    </button>
+    <button class="nav-btn" onclick="showScreen('rate',this)">
+      <span class="nav-icon">⭐</span>Rate
+    </button>
+    <button class="nav-btn" onclick="showScreen('rec',this)">
+      <span class="nav-icon">✨</span>For You
+    </button>
+    <button class="nav-btn" onclick="showScreen('friends',this)">
+      <span class="nav-icon">👥</span>Friends
+    </button>
+  </nav>
+
+  <!-- DISCOVER -->
+  <div class="screen active" id="screen-discover">
+    <div class="top-bar">
+      <div>
+        <h1>Barbuddy</h1>
+      </div>
+      <div class="location-pill">📍 Fort Mill, SC</div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-chip on">All</button>
+      <button class="filter-chip">No Cover</button>
+      <button class="filter-chip">Short Line</button>
+      <button class="filter-chip">Happy Hour</button>
+      <button class="filter-chip">Sports Bar</button>
+      <button class="filter-chip">Rooftop</button>
+    </div>
+    <div class="bar-list">
+      <div class="bar-card">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">The Rusty Anchor</div>
+            <div class="bar-type">Sports bar · 0.3 mi</div>
+          </div>
+          <div class="vibe-score">
+            <span class="score-num">8.4</span>
+            <span class="score-label">Vibe</span>
+          </div>
+        </div>
+        <div class="bar-stats">
+          <div class="stat-box">
+            <div class="stat-label">Line</div>
+            <div class="stat-val good">None</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cover</div>
+            <div class="stat-val good">Free</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Prices</div>
+            <div class="stat-val mid">$$</div>
+          </div>
+        </div>
+        <div class="bar-footer">
+          <div class="friends-here">
+            <div class="avatar-stack">
+              <div class="avatar av1">JR</div>
+              <div class="avatar av2">KM</div>
+            </div>
+            2 friends here
+          </div>
+          <span class="live-badge">🔴 Live</span>
+        </div>
+      </div>
+
+      <div class="bar-card">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Craft & Crown</div>
+            <div class="bar-type">Craft cocktails · 0.6 mi</div>
+          </div>
+          <div class="vibe-score">
+            <span class="score-num">9.1</span>
+            <span class="score-label">Vibe</span>
+          </div>
+        </div>
+        <div class="bar-stats">
+          <div class="stat-box">
+            <div class="stat-label">Line</div>
+            <div class="stat-val mid">~10 min</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cover</div>
+            <div class="stat-val bad">$10</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Prices</div>
+            <div class="stat-val bad">$$$</div>
+          </div>
+        </div>
+        <div class="bar-footer">
+          <div class="friends-here">
+            <div class="avatar-stack">
+              <div class="avatar av3">TL</div>
+              <div class="avatar av4">AS</div>
+              <div class="avatar av1">BP</div>
+            </div>
+            3 friends here
+          </div>
+          <span class="live-badge">🔴 Live</span>
+        </div>
+      </div>
+
+      <div class="bar-card">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Neon Patio</div>
+            <div class="bar-type">Rooftop bar · 1.1 mi</div>
+          </div>
+          <div class="vibe-score">
+            <span class="score-num">7.8</span>
+            <span class="score-label">Vibe</span>
+          </div>
+        </div>
+        <div class="bar-stats">
+          <div class="stat-box">
+            <div class="stat-label">Line</div>
+            <div class="stat-val bad">30+ min</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cover</div>
+            <div class="stat-val mid">$5</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Prices</div>
+            <div class="stat-val mid">$$</div>
+          </div>
+        </div>
+        <div class="bar-footer">
+          <div class="friends-here">
+            <div class="avatar-stack">
+              <div class="avatar av2">ML</div>
+            </div>
+            1 friend here
+          </div>
+          <span class="live-badge">🔴 Live</span>
+        </div>
+      </div>
+
+      <div class="bar-card">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">Barrel & Vine</div>
+            <div class="bar-type">Wine bar · 1.4 mi</div>
+          </div>
+          <div class="vibe-score">
+            <span class="score-num">8.9</span>
+            <span class="score-label">Vibe</span>
+          </div>
+        </div>
+        <div class="bar-stats">
+          <div class="stat-box">
+            <div class="stat-label">Line</div>
+            <div class="stat-val good">None</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cover</div>
+            <div class="stat-val good">Free</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Prices</div>
+            <div class="stat-val mid">$$</div>
+          </div>
+        </div>
+        <div class="bar-footer">
+          <div class="friends-here" style="color: var(--color-text-tertiary); font-size: 12px;">No friends yet</div>
+          <span class="live-badge">🔴 Live</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RATE -->
+  <div class="screen" id="screen-rate">
+    <div class="rate-header">
+      <h2>Rate a bar</h2>
+      <p>Help the community with live conditions</p>
+    </div>
+    <div class="search-box">
+      <span style="font-size: 14px; color: var(--color-text-tertiary);">🔍</span>
+      <input type="text" placeholder="Search bars near you..." id="bar-search" />
+    </div>
+    <div class="rate-bar-pick">
+      <div style="font-size: 11px; color: #0F6E56; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Rating for</div>
+      <div style="font-size: 15px; font-weight: 500; color: var(--color-text-primary);">The Rusty Anchor</div>
+      <div style="font-size: 12px; color: var(--color-text-tertiary);">Sports bar · 0.3 mi away</div>
+    </div>
+    <div class="rating-section">
+      <div class="rating-item">
+        <div class="rating-item-label">
+          <span>Line wait</span>
+          <span id="line-val" style="color: #1D9E75;">No line</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="4" value="0" id="line-slider" oninput="updateLine(this.value)" />
+        </div>
+        <div class="slider-ticks">
+          <span class="tick">None</span><span class="tick">5 min</span><span class="tick">15 min</span><span class="tick">30 min</span><span class="tick">45+ min</span>
+        </div>
+      </div>
+      <div class="rating-item">
+        <div class="rating-item-label">
+          <span>Cover charge</span>
+          <span id="cover-val" style="color: #1D9E75;">Free</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="4" value="0" id="cover-slider" oninput="updateCover(this.value)" />
+        </div>
+        <div class="slider-ticks">
+          <span class="tick">Free</span><span class="tick">$5</span><span class="tick">$10</span><span class="tick">$15</span><span class="tick">$20+</span>
+        </div>
+      </div>
+      <div class="rating-item">
+        <div class="rating-item-label">
+          <span>Vibe rating</span>
+          <span id="vibe-val" style="color: #1D9E75;">5 / 10</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" min="1" max="10" value="5" id="vibe-slider" oninput="updateVibe(this.value)" />
+        </div>
+        <div class="slider-ticks">
+          <span class="tick">Dead</span><span class="tick">Okay</span><span class="tick">Good</span><span class="tick">Lit</span><span class="tick">🔥</span>
+        </div>
+      </div>
+      <div class="rating-item">
+        <div class="rating-item-label">
+          <span>Drink prices</span>
+          <span id="price-val" style="color: #1D9E75;">$</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="3" value="0" id="price-slider" oninput="updatePrice(this.value)" />
+        </div>
+        <div class="slider-ticks">
+          <span class="tick">Cheap</span><span class="tick">$$</span><span class="tick">$$$</span><span class="tick">$$$$</span>
+        </div>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitRating()">Submit live rating ↗</button>
+    <div class="success-msg" id="success-msg">✓ Rating submitted! Thanks for helping the community.</div>
+  </div>
+
+  <!-- FOR YOU -->
+  <div class="screen" id="screen-rec">
+    <div class="rec-header">
+      <h2>For you</h2>
+      <p>Set your preferences, get your spots</p>
+    </div>
+    <div class="pref-section">
+      <div class="pref-group">
+        <div class="pref-group-label">Vibe tonight</div>
+        <div class="pref-chips" id="vibe-chips">
+          <button class="pref-chip" onclick="toggleChip(this)">Chill & low-key</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Turn up</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Meet people</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Watch sports</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Date night</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Group outing</button>
+        </div>
+      </div>
+      <div class="pref-group">
+        <div class="pref-group-label">Must-haves</div>
+        <div class="pref-chips">
+          <button class="pref-chip" onclick="toggleChip(this)">No cover</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Short wait</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Outdoor seating</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Live music</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Happy hour</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Cheap drinks</button>
+        </div>
+      </div>
+      <div class="pref-group">
+        <div class="pref-group-label">Bar type</div>
+        <div class="pref-chips">
+          <button class="pref-chip" onclick="toggleChip(this)">Sports bar</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Craft cocktails</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Dive bar</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Rooftop</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Club</button>
+          <button class="pref-chip" onclick="toggleChip(this)">Wine bar</button>
+        </div>
+      </div>
+    </div>
+    <button class="find-btn" onclick="showRecs()">Find my spots ↗</button>
+    <div id="recs-out" class="recs-out" style="display:none;">
+      <div style="font-size: 12px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Recommended for you</div>
+      <div class="rec-card">
+        <div class="rec-rank">1</div>
+        <div class="rec-info">
+          <div class="rec-name">The Rusty Anchor</div>
+          <div class="rec-tags">No cover · No line · Sports bar</div>
+        </div>
+        <div class="rec-match">97%</div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-rank">2</div>
+        <div class="rec-info">
+          <div class="rec-name">Barrel & Vine</div>
+          <div class="rec-tags">No cover · Chill vibe · Wine bar</div>
+        </div>
+        <div class="rec-match">84%</div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-rank">3</div>
+        <div class="rec-info">
+          <div class="rec-name">Craft & Crown</div>
+          <div class="rec-tags">Lively · Cocktails · 10 min wait</div>
+        </div>
+        <div class="rec-match">71%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="screen" id="screen-friends">
+    <div class="friends-header">
+      <h2>Friends</h2>
+      <button class="invite-btn">+ Invite friends</button>
+    </div>
+    <div style="padding: 0 16px 12px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;">
+      <div style="flex-shrink:0; text-align: center; width: 56px;">
+        <div class="avatar av1" style="width:44px;height:44px;font-size:14px;margin: 0 auto 4px;">JR</div>
+        <div style="font-size:10px;color:var(--color-text-secondary);">Jake R.</div>
+        <div style="font-size:9px;color:#1D9E75;">● Out</div>
+      </div>
+      <div style="flex-shrink:0; text-align: center; width: 56px;">
+        <div class="avatar av2" style="width:44px;height:44px;font-size:14px;margin: 0 auto 4px;">KM</div>
+        <div style="font-size:10px;color:var(--color-text-secondary);">Kim M.</div>
+        <div style="font-size:9px;color:#1D9E75;">● Out</div>
+      </div>
+      <div style="flex-shrink:0; text-align: center; width: 56px;">
+        <div class="avatar av3" style="width:44px;height:44px;font-size:14px;margin: 0 auto 4px;">TL</div>
+        <div style="font-size:10px;color:var(--color-text-secondary);">Tom L.</div>
+        <div style="font-size:9px;color:#1D9E75;">● Out</div>
+      </div>
+      <div style="flex-shrink:0; text-align: center; width: 56px;">
+        <div class="avatar av4" style="width:44px;height:44px;font-size:14px;margin: 0 auto 4px;">AS</div>
+        <div style="font-size:10px;color:var(--color-text-secondary);">Ava S.</div>
+        <div style="font-size:9px;color:var(--color-text-tertiary);">● Home</div>
+      </div>
+      <div style="flex-shrink:0; text-align: center; width: 56px;">
+        <div class="avatar av1" style="width:44px;height:44px;font-size:14px;margin: 0 auto 4px;">BP</div>
+        <div style="font-size:10px;color:var(--color-text-secondary);">Ben P.</div>
+        <div style="font-size:9px;color:#1D9E75;">● Out</div>
+      </div>
+    </div>
+    <div style="height: 0.5px; background: var(--color-border-tertiary); margin: 0 16px 14px;"></div>
+    <div class="activity-feed">
+      <div class="activity-card">
+        <div class="act-top">
+          <div class="act-avatar av1">JR</div>
+          <div class="act-meta">
+            <div class="act-name">Jake Reeves</div>
+            <div class="act-time">8 min ago</div>
+          </div>
+        </div>
+        <div class="act-body">Checked in at <span class="act-bar-ref">The Rusty Anchor</span> and left a rating</div>
+        <div class="act-ratings">
+          <span class="act-rating-pill">No line ✓</span>
+          <span class="act-rating-pill">Free cover ✓</span>
+          <span class="act-rating-pill">Vibe 8/10</span>
+        </div>
+        <button class="join-btn">Join Jake here</button>
+      </div>
+      <div class="activity-card">
+        <div class="act-top">
+          <div class="act-avatar av3">TL</div>
+          <div class="act-meta">
+            <div class="act-name">Tom Liu</div>
+            <div class="act-time">22 min ago</div>
+          </div>
+        </div>
+        <div class="act-body">Checked in at <span class="act-bar-ref">Craft & Crown</span></div>
+        <div class="act-ratings">
+          <span class="act-rating-pill">~10 min wait</span>
+          <span class="act-rating-pill">$10 cover</span>
+          <span class="act-rating-pill">Vibe 9/10 🔥</span>
+        </div>
+        <button class="join-btn">Join Tom here</button>
+      </div>
+      <div class="activity-card">
+        <div class="act-top">
+          <div class="act-avatar av2">KM</div>
+          <div class="act-meta">
+            <div class="act-name">Kim Marsh</div>
+            <div class="act-time">41 min ago</div>
+          </div>
+        </div>
+        <div class="act-body">Rated <span class="act-bar-ref">The Rusty Anchor</span> — says the game is on all screens</div>
+        <div class="act-ratings">
+          <span class="act-rating-pill">Great for groups</span>
+          <span class="act-rating-pill">Vibe 8/10</span>
+        </div>
+        <button class="join-btn">Join Kim here</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+const lineLabels = ['No line','~5 min','~15 min','~30 min','45+ min'];
+const coverLabels = ['Free','$5','$10','$15','$20+'];
+const priceLabels = ['$','$$','$$$','$$$$'];
+function updateLine(v) {
+  const el = document.getElementById('line-val');
+  el.textContent = lineLabels[v];
+  el.style.color = v == 0 ? '#1D9E75' : v <= 1 ? '#BA7517' : '#E24B4A';
+}
+function updateCover(v) {
+  const el = document.getElementById('cover-val');
+  el.textContent = coverLabels[v];
+  el.style.color = v == 0 ? '#1D9E75' : v <= 1 ? '#BA7517' : '#E24B4A';
+}
+function updateVibe(v) {
+  const el = document.getElementById('vibe-val');
+  el.textContent = v + ' / 10';
+  el.style.color = v >= 8 ? '#1D9E75' : v >= 5 ? '#BA7517' : '#E24B4A';
+}
+function updatePrice(v) {
+  const el = document.getElementById('price-val');
+  el.textContent = priceLabels[v];
+  el.style.color = v <= 1 ? '#1D9E75' : v == 2 ? '#BA7517' : '#E24B4A';
+}
+function submitRating() {
+  const msg = document.getElementById('success-msg');
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 3000);
+}
+function toggleChip(el) {
+  el.classList.toggle('sel');
+}
+function showRecs() {
+  const out = document.getElementById('recs-out');
+  out.style.display = out.style.display === 'none' ? 'flex' : 'none';
+}
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+</script>

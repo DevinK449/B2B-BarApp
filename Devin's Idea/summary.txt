@@ -1,0 +1,74 @@
+BAR APP — QUICK SUMMARY
+
+Pitch: BeReal for nightlife. Free for users. Bars pay for analytics.
+
+How it works:
+- BARS post the data (cover, music, deals, vibe) from their dashboard — takes 30 sec
+- USERS just confirm/correct with one tap, or check in with one tap ("I'm here")
+- Photos/details are optional bonus — never required
+- Data wipes nightly at close (ephemeral, fresh every night)
+- Map view shows which bars are hot tonight
+- Bars subscribe ($49–$149/mo) to see analytics on their venue
+
+Why users open the app (selfishly useful):
+- Post to unlock the map (BeReal-style gate)
+- "Your Night, Archived" — personal scrapbook of every night out
+- Friends Out Tonight — see which friends are out and where (opt-in mutual)
+- Streaks/badges (light gamification)
+
+Notifications (the engine):
+- 9pm Fri/Sat push: "What's your night looking like?" (BeReal-style ritual)
+- "Sarah just checked in at The Tap House" (friends-driven FOMO)
+- Smart bar pings: "$3 shots til 11pm, 0.4 mi away" (opt-in only)
+- End-of-night recap: "Your night: 2 bars, photos saved to archive"
+
+Money:
+- Bar subscriptions (main revenue)
+- Sponsored placements ($199+/mo for premium pin/feature)
+- Rideshare partnership cut (passive, add later)
+- NO ads, NO user subscription — users 100% free
+
+Safety (critical):
+- NO user selfies in public feed (back camera only, venue/crowd photos)
+- Friends-only for any identifying content
+- Public data is aggregate ("Bar X is packed") not individual
+- 18+ verification, on-device face blur, fast block/report
+- Ephemeral posts double as a safety feature
+
+Tech stack:
+- React Native + Expo (mobile, iOS + Android)
+- Supabase (backend, real-time, auth, storage)
+- Mapbox (maps)
+- Next.js (bar dashboard web app)
+- Stripe (bar subscriptions)
+
+Name shortlist:
+LastCall, OnTap, Tapped, BarPulse, HopIn
+
+Legal (no patent, but...):
+- Can't patent the idea (software business concepts not patentable post-Alice 2014)
+- DO trademark the name (~$250) once picked
+- Form an LLC ($50–500)
+- Privacy Policy + ToS day one (Termly/Iubenda ~$10/mo)
+
+Data storage:
+- Supabase (Postgres + Auth + Storage + Realtime, all-in-one)
+- $0 free tier at launch, $25/mo at 10K users, ~$200–500/mo at 100K
+- Cloudflare R2 for photos at scale (cheaper than S3)
+- US-East region, GDPR/CCPA compliant from day one
+
+App Store launch:
+- Apple Developer: $99/year, 24–48hr review
+- Google Play: $25 one-time, few hours review
+- 17+ rating required (alcohol/nightlife)
+- MUST have: report system, block system, moderation, ToS, clear location-use copy
+- Build with Expo EAS, ship to TestFlight first
+- Total launch cost: ~$150
+- Timeline code-done → live: ~1–2 weeks iOS, ~3–5 days Android
+
+Next steps:
+1. Pick a name (check App Store + trademark + .com)
+2. Sketch first 3 screens
+3. Set up Expo + Supabase
+4. Talk to 5 bars and 10 bar-goers BEFORE building anything serious
+5. File trademark + LLC once name is locked

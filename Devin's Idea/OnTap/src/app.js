@@ -4,34 +4,39 @@
 // =============================================================
 
 // ---- Mock data -----------------------------------------------
-// Coords geocoded via Photon (OSM). Pavlov's, Five Points Pub, Moosehead
-// fell back to manual placement — Photon couldn't pin them precisely.
+// 11 real venues pulled from OpenStreetMap via Overpass API
+// (https://overpass-api.de) — query: amenity=bar|pub|nightclub within
+// 600m of Five Points center. Crowd / cover / deal / vibe / posts are
+// mock for the demo; in production they come from Supabase real-time.
 const BARS = [
-  { id: 1,  name: "Group Therapy",      type: "bar",  lat: 34.00063, lng: -81.01625, crowd: "packed", music: "Hip-Hop",    cover: 5,  line: "~10 min", deal: "$3 fireballs til 11pm",     vibe: "Hype",  posts: 52, address: "2107 Greene St",   emoji: "🎤" },
-  { id: 2,  name: "Pavlov's",           type: "bar",  lat: 34.00064, lng: -81.01680, crowd: "packed", music: "Top 40",     cover: 10, line: "30+ min", deal: null,                        vibe: "Dance", posts: 64, address: "2009 Greene St",   emoji: "💃" },
-  { id: 3,  name: "Five Points Pub",    type: "bar",  lat: 34.00065, lng: -81.01505, crowd: "busy",   music: "Rock",       cover: 0,  line: "~5 min",  deal: "$2 PBR all night",          vibe: "Dive",  posts: 31, address: "2020 Saluda Ave",  emoji: "🍻" },
-  { id: 4,  name: "Rooftop",            type: "club", lat: 33.99841, lng: -81.01546, crowd: "packed", music: "EDM",        cover: 10, line: "30+ min", deal: "Bottle service available",  vibe: "Dance", posts: 58, address: "Harden St",        emoji: "🌃" },
-  { id: 5,  name: "Jake's at 5 Points", type: "bar",  lat: 33.99866, lng: -81.01501, crowd: "packed", music: "Country",    cover: 5,  line: "~15 min", deal: "$4 wells til 10pm",         vibe: "Hype",  posts: 47, address: "2112 Devine St",   emoji: "🤠" },
-  { id: 6,  name: "Pinch",              type: "bar",  lat: 33.99851, lng: -81.01550, crowd: "busy",   music: "EDM",        cover: 10, line: "~5 min",  deal: null,                        vibe: "Dance", posts: 35, address: "Harden St",        emoji: "🪩" },
-  { id: 7,  name: "Bar None",           type: "bar",  lat: 33.99809, lng: -81.01518, crowd: "chill",  music: "Indie",      cover: 0,  line: "no line", deal: "$8 craft cocktails",        vibe: "Chill", posts: 14, address: "Harden St",        emoji: "🥃" },
-  { id: 8,  name: "Salty Nut Cafe",     type: "bar",  lat: 33.99948, lng: -81.01835, crowd: "chill",  music: "Mixed",      cover: 0,  line: "no line", deal: "$5 build-a-burger til 1am", vibe: "Chill", posts: 19, address: "2000 Greene St",   emoji: "🥜" },
-  { id: 9,  name: "The Saloon",         type: "club", lat: 34.00085, lng: -81.01647, crowd: "packed", music: "Country",    cover: 5,  line: "~20 min", deal: "Line dancing til 11pm",     vibe: "Hype",  posts: 41, address: "Harden St",        emoji: "🐴" },
-  { id: 10, name: "Moosehead",          type: "club", lat: 34.00064, lng: -81.01710, crowd: "packed", music: "Top 40 / EDM", cover: 10, line: "~25 min", deal: null,                      vibe: "Dance", posts: 73, address: "2009 Greene St",   emoji: "🦌" },
+  { id: 1,  name: "Group Therapy",          type: "bar",  lat: 34.00064, lng: -81.01625, crowd: "packed", music: "Hip-Hop",      cover: 5,  line: "~10 min", deal: "$3 fireballs til 11pm",  vibe: "Hype",  posts: 52, address: "2107 Greene St",   emoji: "🎤" },
+  { id: 2,  name: "Pinch",                  type: "bar",  lat: 33.99851, lng: -81.01550, crowd: "busy",   music: "EDM",          cover: 10, line: "~5 min",  deal: null,                     vibe: "Dance", posts: 35, address: "Harden St",        emoji: "🪩" },
+  { id: 3,  name: "Rooftop",                type: "club", lat: 33.99841, lng: -81.01546, crowd: "packed", music: "EDM",          cover: 10, line: "30+ min", deal: "Bottle service available",vibe: "Dance", posts: 58, address: "Harden St",        emoji: "🌃" },
+  { id: 4,  name: "Jake's at 5 Points",     type: "bar",  lat: 33.99861, lng: -81.01502, crowd: "packed", music: "Country",      cover: 5,  line: "~15 min", deal: "$4 wells til 10pm",      vibe: "Hype",  posts: 47, address: "2112 Devine St",   emoji: "🤠" },
+  { id: 5,  name: "Bar None",               type: "bar",  lat: 33.99809, lng: -81.01518, crowd: "chill",  music: "Indie",        cover: 0,  line: "no line", deal: "$8 craft cocktails",     vibe: "Chill", posts: 14, address: "Harden St",        emoji: "🥃" },
+  { id: 6,  name: "Saloon at Five Points",  type: "club", lat: 34.00084, lng: -81.01647, crowd: "packed", music: "Country",      cover: 5,  line: "~20 min", deal: "Line dancing til 11pm",  vibe: "Hype",  posts: 41, address: "Harden St",        emoji: "🐴" },
+  { id: 7,  name: "CJ's",                   type: "bar",  lat: 33.99987, lng: -81.01720, crowd: "busy",   music: "Top 40",       cover: 5,  line: "~5 min",  deal: "Karaoke til midnight",   vibe: "Hype",  posts: 26, address: "Harden St",        emoji: "🎶" },
+  { id: 8,  name: "Jack Brown's",           type: "bar",  lat: 33.99914, lng: -81.01642, crowd: "chill",  music: "Rock",         cover: 0,  line: "no line", deal: "$5 burger + beer combo", vibe: "Chill", posts: 22, address: "711 Harden St",    emoji: "🍔" },
+  { id: 9,  name: "Publick House",          type: "bar",  lat: 33.99893, lng: -81.01180, crowd: "chill",  music: "Pub mix",      cover: 0,  line: "no line", deal: "$3 draft pints",         vibe: "Chill", posts: 11, address: "Devine St",        emoji: "🍺" },
+  { id: 10, name: "Lucky's of Columbia",    type: "bar",  lat: 33.99864, lng: -81.01555, crowd: "busy",   music: "Mixed",        cover: 0,  line: "~5 min",  deal: "$2 PBR + shot specials", vibe: "Dive",  posts: 29, address: "Harden St",        emoji: "🍀" },
+  { id: 11, name: "Breakers Live",          type: "club", lat: 34.00064, lng: -81.01702, crowd: "packed", music: "Top 40 / EDM", cover: 10, line: "~25 min", deal: null,                     vibe: "Dance", posts: 73, address: "2009 Greene St",   emoji: "🎵" },
+  { id: 12, name: "CB18 Bar and Grill",     type: "bar",  lat: 34.00048, lng: -81.01699, crowd: "packed", music: "Top 40 / Hip-Hop", cover: 5, line: "~15 min", deal: "18+ til midnight",     vibe: "Hype",  posts: 81, address: "Greene St",        emoji: "🎓" },
+  { id: 13, name: "Salty Nut Cafe",         type: "bar",  lat: 33.99948, lng: -81.01835, crowd: "chill",  music: "Mixed",            cover: 0, line: "no line", deal: "$5 build-a-burger til 1am", vibe: "Chill", posts: 19, address: "2000 Greene St",   emoji: "🥜" },
 ];
 
 const FRIENDS = [
-  { name: "Sarah", initial: "S", color: "#ff5470", barId: 1, mins: 12, status: "at" },
-  { name: "Mike",  initial: "M", color: "#00f5d4", barId: 2, mins: 8,  status: "at" },
+  { name: "Sarah", initial: "S", color: "#ff5470", barId: 1,  mins: 12, status: "at" },           // Group Therapy
+  { name: "Mike",  initial: "M", color: "#00f5d4", barId: 11, mins: 8,  status: "at" },           // Breakers Live
   { name: "Jess",  initial: "J", color: "#ffd166", barId: null, mins: 25, status: "pregaming" },
-  { name: "Tom",   initial: "T", color: "#a78bfa", barId: 4, mins: 5,  status: "at" },
+  { name: "Tom",   initial: "T", color: "#a78bfa", barId: 3,  mins: 5,  status: "at" },           // Rooftop
   { name: "Em",    initial: "E", color: "#38d9a9", barId: null, mins: 0, status: "heading-out" },
 ];
 
 const ARCHIVE = [
-  { date: "Last Friday",     bars: ["Group Therapy", "Pavlov's"],                                friends: ["Sarah", "Mike"],     photos: 14, vibe: "Gamecock pregame → Five Points" },
-  { date: "Last Saturday",   bars: ["Pinch", "Pavlov's", "Rooftop"],                              friends: ["Tom", "Em", "Sarah"], photos: 23, vibe: "Dance till 2am" },
-  { date: "Two Fridays ago", bars: ["Five Points Pub", "Bar None"],                               friends: ["Mike"],               photos: 8,  vibe: "Chill craft beer" },
-  { date: "Bid day",         bars: ["Group Therapy", "Jake's at 5 Points", "Pavlov's", "Pinch"],  friends: ["Crew of 8"],          photos: 47, vibe: "🍻🍻🍻" },
+  { date: "Last Friday",     bars: ["Group Therapy", "Lucky's"],                                       friends: ["Sarah", "Mike"],      photos: 14, vibe: "Gamecock pregame → Five Points" },
+  { date: "Last Saturday",   bars: ["Pinch", "Breakers Live", "Rooftop"],                               friends: ["Tom", "Em", "Sarah"], photos: 23, vibe: "Dance till 2am" },
+  { date: "Two Fridays ago", bars: ["Publick House", "Bar None"],                                       friends: ["Mike"],               photos: 8,  vibe: "Chill craft beer" },
+  { date: "Bid day",         bars: ["Group Therapy", "Jake's at 5 Points", "Breakers Live", "Pinch"],   friends: ["Crew of 8"],          photos: 47, vibe: "🍻🍻🍻" },
 ];
 
 // =============================================================

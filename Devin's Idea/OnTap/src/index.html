@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OnTap — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+
+    <!-- Page brand / header -->
+    <div class="brand">
+      <div class="brand-logo">On<span class="accent">Tap</span></div>
+      <div class="brand-tag">Nightlife discovery · Tauri demo</div>
+    </div>
+
+    <!-- Theme toggle (top-right of page) -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <span class="theme-icon-dark">🌙</span>
+      <span class="theme-icon-light">☀️</span>
+    </button>
+
+    <!-- ============================================================
+         PHONE FRAME
+         ============================================================ -->
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+
+      <!-- =================== MAP SCREEN =================== -->
+      <section class="screen active" id="map-screen">
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="city-pill">📍 Five Points · Columbia SC</div>
+          </div>
+          <div class="topbar-right">
+            <button class="ghost-btn" id="showSplashBtn" title="Show signup demo">⓵</button>
+          </div>
+        </header>
+
+        <div id="leaflet-map"></div>
+
+        <!-- Live vibe stat strip across bottom of map -->
+        <div class="vibe-strip">
+          <div class="vibe-stat"><span class="num" id="liveBars">10</span><span class="lbl">venues live</span></div>
+          <div class="vibe-stat"><span class="num" id="livePosts">312</span><span class="lbl">posted tonight</span></div>
+          <div class="vibe-stat"><span class="num accent">3</span><span class="lbl">friends out</span></div>
+        </div>
+
+        <!-- Filter chips -->
+        <div class="filter-chips">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="bars">🍺 Bars</button>
+          <button class="chip" data-filter="clubs">🪩 Clubs</button>
+          <button class="chip" data-filter="packed">🔥 Packed</button>
+          <button class="chip" data-filter="chill">😌 Chill</button>
+          <button class="chip" data-filter="deal">💸 Deals</button>
+          <button class="chip" data-filter="no-cover">🚪 No Cover</button>
+        </div>
+      </section>
+
+      <!-- =================== FRIENDS SCREEN =================== -->
+      <section class="screen" id="friends-screen">
+        <header class="screen-header">
+          <h1>Friends Tonight</h1>
+          <p class="muted">3 of 17 friends out right now</p>
+        </header>
+        <div class="friends-list" id="friendsList"></div>
+      </section>
+
+      <!-- =================== ARCHIVE SCREEN =================== -->
+      <section class="screen" id="archive-screen">
+        <header class="screen-header">
+          <h1>Your Night, Archived</h1>
+          <div class="streak-pill">🔥 5 Fridays in a row</div>
+        </header>
+        <div class="archive-list" id="archiveList"></div>
+      </section>
+
+      <!-- =================== PROFILE SCREEN =================== -->
+      <section class="screen" id="profile-screen">
+        <header class="screen-header center">
+          <div class="avatar big">DK</div>
+          <h1>Devin K</h1>
+          <p class="muted">@devink · Member since 2026</p>
+        </header>
+
+        <div class="stat-grid">
+          <div class="stat-tile"><div class="stat-num">23</div><div class="stat-lbl">Nights out</div></div>
+          <div class="stat-tile"><div class="stat-num">14</div><div class="stat-lbl">Bars visited</div></div>
+          <div class="stat-tile"><div class="stat-num">8</div><div class="stat-lbl">Friends out with</div></div>
+          <div class="stat-tile"><div class="stat-num">5</div><div class="stat-lbl">Friday streak</div></div>
+        </div>
+
+        <ul class="settings-list">
+          <li><span>Notifications</span><span class="muted">Friends + 9pm push</span></li>
+          <li><span>Friends visibility</span><span class="muted">Mutual only</span></li>
+          <li><span>Verified age (18+)</span><span class="ok">Verified ✓</span></li>
+          <li><span>Privacy</span><span class="muted">Aggregate-only public data</span></li>
+        </ul>
+      </section>
+
+      <!-- =================== BAR DETAIL SHEET =================== -->
+      <div class="sheet" id="barSheet" aria-hidden="true">
+        <div class="sheet-handle"></div>
+        <div class="sheet-content">
+          <div class="bar-header">
+            <div>
+              <div class="bar-name" id="bsName">—</div>
+              <div class="bar-addr muted" id="bsAddr">—</div>
+            </div>
+            <button class="ghost-btn close-sheet" id="closeSheet">✕</button>
+          </div>
+
+          <div class="bar-vibe-row">
+            <span class="chip-strong" id="bsType">—</span>
+            <span class="chip-strong" id="bsVibe">—</span>
+            <span class="chip-strong" id="bsCrowd">—</span>
+            <span class="chip-strong"><span id="bsPosts">0</span> posted tonight</span>
+          </div>
+
+          <!-- One-tap stat cards (the core mechanic) -->
+          <div class="onetap-stats">
+            <div class="onetap-stat">
+              <div class="ot-label">Cover</div>
+              <div class="ot-value" id="bsCover">—</div>
+              <div class="ot-actions">
+                <button class="ot-confirm" data-stat="cover">✓ Confirm</button>
+                <button class="ot-correct" data-stat="cover">Correct</button>
+              </div>
+            </div>
+            <div class="onetap-stat">
+              <div class="ot-label">Line</div>
+              <div class="ot-value" id="bsLine">—</div>
+              <div class="ot-actions">
+                <button class="ot-confirm" data-stat="line">✓ Confirm</button>
+                <button class="ot-correct" data-stat="line">Correct</button>
+              </div>
+            </div>
+            <div class="onetap-stat">
+              <div class="ot-label">Music</div>
+              <div class="ot-value" id="bsMusic">—</div>
+              <div class="ot-actions">
+                <button class="ot-confirm" data-stat="music">✓ Confirm</button>
+                <button class="ot-correct" data-stat="music">Correct</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tonight's deal -->
+          <div class="deal-block" id="bsDealBlock">
+            <div class="deal-label">🎁 Tonight's deal</div>
+            <div class="deal-text" id="bsDeal">—</div>
+          </div>
+
+          <!-- Photos strip -->
+          <div class="photo-strip">
+            <div class="photo-tile">📸</div>
+            <div class="photo-tile">🎉</div>
+            <div class="photo-tile">🍻</div>
+            <div class="photo-tile">🎶</div>
+          </div>
+
+          <!-- The big one-tap CTA -->
+          <button class="check-in-btn" id="checkInBtn">
+            <span class="ci-text">Check In Here</span>
+            <span class="ci-sub">One tap. You'll be added to tonight's count.</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- =================== CHECK-IN MODAL =================== -->
+      <div class="modal" id="checkinModal" aria-hidden="true">
+        <div class="modal-card">
+          <div class="modal-emoji">🎉</div>
+          <h2>You're in!</h2>
+          <p class="muted">Checked in at <strong id="ciBarName">—</strong></p>
+          <div class="ci-counter">
+            <span class="ci-old" id="ciOld">47</span>
+            <span class="ci-arrow">→</span>
+            <span class="ci-new" id="ciNew">48</span>
+          </div>
+          <p class="muted small">people posted here tonight</p>
+          <button class="primary-btn" id="closeCheckin">Done</button>
+        </div>
+      </div>
+
+      <!-- =================== SPLASH / SIGNUP =================== -->
+      <div class="modal" id="splashModal" aria-hidden="true">
+        <div class="modal-card splash">
+          <div class="splash-logo">On<span class="accent">Tap</span></div>
+          <p class="muted">BeReal for nightlife.<br/>Free for users. Bars pay for analytics.</p>
+          <div class="splash-features">
+            <div>📍 Live bar map</div>
+            <div>👥 Friends out tonight</div>
+            <div>📓 Your night, archived</div>
+          </div>
+          <button class="primary-btn"><span style="margin-right:8px;">📱</span> Continue with phone</button>
+          <button class="ghost-pill">Continue with Apple</button>
+          <button class="ghost-pill">Continue with Google</button>
+          <p class="muted xsmall">By continuing you confirm you are 18+</p>
+          <button class="link-btn" id="closeSplash">Skip for demo →</button>
+        </div>
+      </div>
+
+      <!-- =================== BOTTOM NAV =================== -->
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-screen="map-screen">
+          <span class="nav-ico">🗺️</span><span class="nav-lbl">Map</span>
+        </button>
+        <button class="nav-btn" data-screen="friends-screen">
+          <span class="nav-ico">👥</span><span class="nav-lbl">Friends</span>
+        </button>
+        <button class="nav-btn check-in-fab" id="quickCheckIn" title="Quick check-in">
+          <span class="fab-icon">+</span>
+        </button>
+        <button class="nav-btn" data-screen="archive-screen">
+          <span class="nav-ico">📓</span><span class="nav-lbl">Archive</span>
+        </button>
+        <button class="nav-btn" data-screen="profile-screen">
+          <span class="nav-ico">👤</span><span class="nav-lbl">Profile</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Side info card -->
+    <aside class="side-card">
+      <h3>What you're looking at</h3>
+      <ul>
+        <li><strong>Tap a pin</strong> on the map → bar detail sheet slides up</li>
+        <li><strong>Tap "Check In"</strong> → demos the one-tap mechanic</li>
+        <li><strong>Bottom nav</strong> → switch between Map / Friends / Archive / Profile</li>
+        <li><strong>Top right ⓵</strong> → see the signup splash screen</li>
+        <li><strong>🌙/☀️ top corner</strong> → switch light/dark theme</li>
+      </ul>
+      <div class="info-block">
+        <div class="info-title">Mock data</div>
+        <div class="info-body">10 venues across Five Points (Columbia, SC) — 7 bars + 3 clubs (Rooftop, Saloon, Moosehead). Clubs get a neon glowing pin to stand out. 5 friends. 4 archived nights.</div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnTap — Merged Prototype</title>
+<style>
+  :root {
+    --bg: #0A0F0D;
+    --card: #111916;
+    --card-alt: #161F1B;
+    --green: #1D9E75;
+    --green-mid: #5DCAA5;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-glow: rgba(29,158,117,0.18);
+    --border: rgba(255,255,255,0.08);
+    --border-green: rgba(93,202,165,0.35);
+    --text: #F0F4F2;
+    --muted: rgba(240,244,242,0.55);
+    --faint: rgba(240,244,242,0.28);
+    --amber: #F0A500;
+    --red: #E24B4A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 12px;
+  }
+  .device {
+    width: 390px;
+    min-height: 760px;
+    background: var(--bg);
+    border-radius: 28px;
+    border: 0.5px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 22px 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  /* Bottom nav */
+  .nav {
+    display: flex;
+    border-top: 0.5px solid var(--border);
+    background: var(--bg);
+    padding: 8px 0 18px;
+  }
+  .nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 10px;
+    transition: color 0.15s;
+  }
+  .nav-btn.active { color: var(--green-mid); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+  .nav-btn.post-btn .nav-icon {
+    width: 44px; height: 44px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 22px;
+    box-shadow: 0 0 18px rgba(29,158,117,0.45);
+    margin-top: -16px;
+  }
+  /* Screens */
+  .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
+  .screen-body { flex: 1; overflow-y: auto; }
+  .screen-body::-webkit-scrollbar { display: none; }
+
+  /* Header */
+  .top-bar { padding: 10px 18px 10px; display: flex; justify-content: space-between; align-items: center; }
+  .top-bar h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .location-pill {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.04);
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border);
+  }
+
+  /* Filters */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 18px 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 6px 13px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-chip.on {
+    background: var(--green-glow);
+    border-color: var(--border-green);
+    color: var(--green-mid);
+  }
+
+  /* Bar cards */
+  .bar-list { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .bar-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .bar-card:active { transform: scale(0.99); }
+  .bar-card:hover { border-color: var(--border-green); }
+  .bar-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .bar-name { font-size: 16px; font-weight: 600; }
+  .bar-type { font-size: 12px; color: var(--faint); margin-top: 2px; }
+  .vibe-score { display: flex; flex-direction: column; align-items: flex-end; }
+  .score-num { font-size: 22px; font-weight: 700; color: var(--green-mid); line-height: 1; }
+  .score-label { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .bar-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .stat-box {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 7px 8px;
+    border: 0.5px solid var(--border);
+  }
+  .stat-label { font-size: 9px; color: var(--faint); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-val { font-size: 12px; font-weight: 600; color: var(--text); }
+  .stat-val.good { color: var(--green-mid); }
+  .stat-val.mid { color: var(--amber); }
+  .stat-val.bad { color: var(--red); }
+  .bar-footer { display: flex; justify-content: space-between; align-items: center; }
+  .friends-here { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .avatar-stack { display: flex; }
+  .avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--bg);
+    font-size: 9px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: -6px;
+  }
+  .avatar:first-child { margin-left: 0; }
+  .av1 { background: #B5D4F4; color: #0C447C; }
+  .av2 { background: #F4C0D1; color: #72243E; }
+  .av3 { background: #C0DD97; color: #3B6D11; }
+  .av4 { background: #FAC775; color: #633806; }
+  .live-badge {
+    font-size: 10px;
+    background: rgba(226,75,74,0.18);
+    color: #FF8585;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .live-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Bar detail */
+  .detail-hero {
+    height: 180px;
+    background: linear-gradient(135deg, #1a3329 0%, #0a1612 100%);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+  }
+  .detail-back {
+    position: absolute;
+    top: 14px; left: 14px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    border: 0.5px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .detail-name { font-size: 24px; font-weight: 700; }
+  .detail-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .detail-section {
+    padding: 14px 18px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-label {
+    font-size: 10px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .vibe-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .vibe-item {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .vibe-item-label { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .vibe-item-val { font-size: 14px; font-weight: 600; }
+  .confirm-row { display: flex; gap: 8px; margin-top: 10px; }
+  .confirm-btn {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 0.5px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .confirm-btn:hover { border-color: var(--border-green); color: var(--green-mid); }
+  .deal-card {
+    background: linear-gradient(135deg, rgba(29,158,117,0.15) 0%, rgba(15,110,86,0.05) 100%);
+    border: 0.5px solid var(--border-green);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .deal-title { font-size: 14px; font-weight: 600; color: var(--green-mid); margin-bottom: 2px; }
+  .deal-desc { font-size: 12px; color: var(--muted); }
+
+  /* Forecast */
+  .forecast-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .forecast-row::-webkit-scrollbar { display: none; }
+  .forecast-cell {
+    flex-shrink: 0;
+    width: 52px;
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    text-align: center;
+  }
+  .forecast-hour { font-size: 10px; color: var(--faint); margin-bottom: 6px; }
+  .forecast-bar-wrap {
+    height: 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  .forecast-bar {
+    width: 18px;
+    background: var(--green);
+    border-radius: 3px 3px 0 0;
+    min-height: 4px;
+  }
+  .forecast-pct { font-size: 10px; font-weight: 600; color: var(--text); }
+
+  /* Post screen */
+  .post-screen { padding: 18px; text-align: center; }
+  .post-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .post-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+  .post-bar-pick {
+    background: var(--card);
+    border: 1px solid var(--border-green);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 18px;
+    text-align: left;
+  }
+  .post-bar-name { font-size: 16px; font-weight: 600; }
+  .post-bar-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .post-bar-detected {
+    font-size: 11px;
+    color: var(--green-mid);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .one-tap-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 14px;
+    box-shadow: 0 0 30px rgba(29,158,117,0.4);
+    transition: transform 0.1s;
+  }
+  .one-tap-btn:active { transform: scale(0.98); }
+  .vibe-emoji-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+  .vibe-emoji {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .vibe-emoji.sel {
+    background: var(--green-glow);
+    border-color: var(--border-green);
+    transform: scale(1.08);
+  }
+  .post-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 16px;
+    color: var(--faint);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .post-divider::before, .post-divider::after {
+    content: "";
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+  }
+  .deeper-toggle {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    background: transparent;
+    border: 0.5px solid var(--border);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .deeper-toggle:hover { border-color: var(--border-green); color: var(--green-mid); }
+  .slider-section { margin-top: 16px; display: none; text-align: left; }
+  .slider-section.show { display: block; }
+  .slider-row { margin-bottom: 16px; }
+  .slider-label { font-size: 13px; font-weight: 500; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .slider-label span:last-child { color: var(--green-mid); font-weight: 600; }
+  .slider-row input[type=range] {
+    width: 100%;
+    accent-color: var(--green-mid);
+  }
+
+  /* Profile */
+  .profile-header {
+    padding: 22px 18px 14px;
+    text-align: center;
+  }
+  .profile-avatar {
+    width: 76px; height: 76px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--green-mid) 0%, var(--green-dark) 100%);
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 0 24px rgba(29,158,117,0.35);
+  }
+  .profile-name { font-size: 20px; font-weight: 700; }
+  .profile-handle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0 18px 18px;
+  }
+  .stat-tile {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-tile-num { font-size: 20px; font-weight: 700; color: var(--green-mid); }
+  .stat-tile-label { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+  .archive-list { padding: 0 18px 18px; }
+  .archive-item {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .archive-date {
+    font-size: 10px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    width: 56px;
+    flex-shrink: 0;
+  }
+  .archive-bar { font-size: 14px; font-weight: 500; flex: 1; }
+  .archive-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Onboarding */
+  .onboarding-screen {
+    padding: 28px 24px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+  .logo-mark {
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #2DBF8C 0%, #0F6E56 100%);
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 0 30px rgba(29,158,117,0.4);
+  }
+  .ob-title { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .ob-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+  .ob-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .ob-feature {
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .primary-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(29,158,117,0.35);
+    transition: transform 0.1s;
+  }
+  .primary-btn:active { transform: scale(0.98); }
+  .ob-footnote { font-size: 11px; color: var(--faint); margin-top: 12px; }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--green);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 22px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(29,158,117,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px);
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+
+  <div class="status-bar">
+    <span>9:42</span>
+    <span style="display: flex; gap: 4px; align-items: center;">
+      <span style="font-size: 10px;">📶</span>
+      <span style="font-size: 10px;">🔋</span>
+    </span>
+  </div>
+
+  <!-- ONBOARDING SCREEN -->
+  <div class="screen active" id="screen-onboarding">
+    <div class="screen-body">
+      <div class="onboarding-screen">
+        <div class="logo-mark">🍻</div>
+        <div class="ob-title">OnTap</div>
+        <div class="ob-subtitle">The live pulse of your night out</div>
+        <div class="ob-features">
+          <div class="ob-feature">🗺  Live bar conditions near you</div>
+          <div class="ob-feature">⭐  One-tap check-ins, real-time vibes</div>
+          <div class="ob-feature">👥  See where friends are tonight</div>
+          <div class="ob-feature">📊  Forecast tonight's busy hours</div>
+        </div>
+        <button class="primary-btn" onclick="goTo('discover')">Get started →</button>
+        <div class="ob-footnote">Must be 21+ to use OnTap</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCOVER SCREEN -->
+  <div class="screen" id="screen-discover">
+    <div class="screen-body">
+      <div class="top-bar">
+        <h1>Tonight</h1>
+        <div class="location-pill">📍 Fort Mill, SC</div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip on" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="busy">Busy now</button>
+        <button class="filter-chip" data-filter="deals">Deals</button>
+        <button class="filter-chip" data-filter="nocover">No cover</button>
+        <button class="filter-chip" data-filter="friends">Friends here</button>
+        <button class="filter-chip" data-filter="sports">Sports</button>
+        <button class="filter-chip" data-filter="cocktails">Cocktails</button>
+      </div>
+      <div class="bar-list" id="bar-list">
+        <!-- Cards rendered by JS -->
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="goTo('discover')"><span class="nav-icon">🗺</span><span>Discover</span></button>
+      <button class="nav-btn" onclick="goTo('forecast')"><span class="nav-icon">📊</span><span>Forecast</span></button>
+      <button class="nav-btn post-btn" onclick="goTo('post')"><span class="nav-icon">+</span></button>
+      <button class="nav-btn" onclick="goTo('friends')"><span class="nav-icon">👥</span><span>Friends</span></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span>You</span></button>
+    </div>
+  </div>
+
+  <!-- BAR DETAIL SCREEN -->
+  <div class="screen" id="screen-detail">
+    <div class="screen-body">
+      <div class="detail-hero">
+        <button class="detail-back" onclick="goTo('discover')">←</button>
+        <div>
+          <div class="detail-name" id="detail-name">The Rusty Anchor</div>
+          <div class="detail-sub" id="detail-sub">Sports bar · 0.3 mi · Open till 2am</div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Live vibe — confirmed by 23 tonight</div>
+        <div class="vibe-grid">
+          <div class="vibe-item"><div class="vibe-item-label">Crowd</div><div class="vibe-item-val">🔥 Busy</div></div>
+          <div class="vibe-item"><div class="vibe-item-label">Music</div><div class="vibe-item-val">Hip-hop</div></div>
+          <div class="vibe-item"><div class="vibe-item-label">Cover</div><div class="vibe-item-val" style="color: var(--green-mid);">Free</div></div>
+          <div class="vibe-item"><div class="vibe-item-label">Line</div><div class="vibe-item-val">~5 min</div></div>
+        </div>
+        <div class="confirm-row">
+          <button class="confirm-btn" onclick="showToast('Confirmed ✓')">👍 Looks right</button>
+          <button class="confirm-btn" onclick="showToast('Thanks — updating')">✏️ Correct it</button>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Tonight's deals</div>
+        <div class="deal-card">
+          <div class="deal-title">$3 well shots til 11pm</div>
+          <div class="deal-desc">Posted by The Rusty Anchor · 2 hours ago</div>
+        </div>
+        <div class="deal-card">
+          <div class="deal-title">$2 off draft beers</div>
+          <div class="deal-desc">All night for game watchers</div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Forecast — next 4 hours</div>
+        <div class="forecast-row" id="detail-forecast">
+          <!-- Filled by JS -->
+        </div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5;">
+          💡 Best time: <strong style="color: var(--green-mid);">before 10 PM</strong> — same vibe, no line, free cover stays all night.
+        </div>
+      </div>
+
+      <div class="detail-section" style="border-bottom: none;">
+        <div class="section-label">Friends here tonight</div>
+        <div class="friends-here">
+          <div class="avatar-stack">
+            <div class="avatar av1">JR</div>
+            <div class="avatar av2">KM</div>
+            <div class="avatar av3">TL</div>
+          </div>
+          <span>Jake, Kim, Tom · checked in 30 min ago</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="goTo('discover')"><span class="nav-icon">🗺</span><span>Discover</span></button>
+      <button class="nav-btn" onclick="goTo('forecast')"><span class="nav-icon">📊</span><span>Forecast</span></button>
+      <button class="nav-btn post-btn" onclick="goTo('post')"><span class="nav-icon">+</span></button>
+      <button class="nav-btn" onclick="goTo('friends')"><span class="nav-icon">👥</span><span>Friends</span></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span>You</span></button>
+    </div>
+  </div>
+
+  <!-- POST / CHECK-IN SCREEN -->
+  <div class="screen" id="screen-post">
+    <div class="screen-body">
+      <div class="post-screen">
+        <div class="post-title">Check in</div>
+        <div class="post-subtitle">One tap. That's it.</div>
+
+        <div class="post-bar-pick">
+          <div class="post-bar-name">The Rusty Anchor</div>
+          <div class="post-bar-meta">Sports bar · 0.3 mi away</div>
+          <div class="post-bar-detected">📍 Detected from your location</div>
+        </div>
+
+        <button class="one-tap-btn" onclick="oneTapCheckin()">I'm here 🍻</button>
+
+        <div style="font-size: 12px; color: var(--faint); margin-bottom: 18px;">Optional — how's the vibe?</div>
+        <div class="vibe-emoji-row">
+          <button class="vibe-emoji" onclick="selectVibe(this)">😴</button>
+          <button class="vibe-emoji" onclick="selectVibe(this)">😊</button>
+          <button class="vibe-emoji" onclick="selectVibe(this)">🔥</button>
+          <button class="vibe-emoji" onclick="selectVibe(this)">💃</button>
+        </div>
+
+        <div class="post-divider">For the dedicated</div>
+        <button class="deeper-toggle" onclick="toggleDeeper()" id="deeper-toggle">+ Add a deeper rating (optional)</button>
+
+        <div class="slider-section" id="slider-section">
+          <div class="slider-row">
+            <div class="slider-label"><span>Vibe</span><span id="vibe-val">7</span></div>
+            <input type="range" min="1" max="10" value="7" oninput="document.getElementById('vibe-val').innerText = this.value">
+          </div>
+          <div class="slider-row">
+            <div class="slider-label"><span>Crowd</span><span id="crowd-val">8</span></div>
+            <input type="range" min="1" max="10" value="8" oninput="document.getElementById('crowd-val').innerText = this.value">
+          </div>
+          <div class="slider-row">
+            <div class="slider-label"><span>Price</span><span id="price-val">5</span></div>
+            <input type="range" min="1" max="10" value="5" oninput="document.getElementById('price-val').innerText = this.value">
+          </div>
+          <div class="slider-row">
+            <div class="slider-label"><span>Music</span><span id="music-val">8</span></div>
+            <input type="range" min="1" max="10" value="8" oninput="document.getElementById('music-val').innerText = this.value">
+          </div>
+          <button class="primary-btn" onclick="submitDeep()">Submit deep rating</button>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('discover')"><span class="nav-icon">🗺</span><span>Discover</span></button>
+      <button class="nav-btn" onclick="goTo('forecast')"><span class="nav-icon">📊</span><span>Forecast</span></button>
+      <button class="nav-btn post-btn active" onclick="goTo('post')"><span class="nav-icon">+</span></button>
+      <button class="nav-btn" onclick="goTo('friends')"><span class="nav-icon">👥</span><span>Friends</span></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span>You</span></button>
+    </div>
+  </div>
+
+  <!-- FORECAST SCREEN -->
+  <div class="screen" id="screen-forecast">
+    <div class="screen-body">
+      <div class="top-bar">
+        <h1>Forecast</h1>
+        <div class="location-pill">Tonight · Fri</div>
+      </div>
+      <div style="padding: 0 18px 14px; font-size: 13px; color: var(--muted); line-height: 1.5;">
+        Predicted busyness, cover &amp; line for nearby bars. Updated live as users check in.
+      </div>
+      <div class="bar-list" id="forecast-list">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('discover')"><span class="nav-icon">🗺</span><span>Discover</span></button>
+      <button class="nav-btn active" onclick="goTo('forecast')"><span class="nav-icon">📊</span><span>Forecast</span></button>
+      <button class="nav-btn post-btn" onclick="goTo('post')"><span class="nav-icon">+</span></button>
+      <button class="nav-btn" onclick="goTo('friends')"><span class="nav-icon">👥</span><span>Friends</span></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span>You</span></button>
+    </div>
+  </div>
+
+  <!-- FRIENDS SCREEN -->
+  <div class="screen" id="screen-friends">
+    <div class="screen-body">
+      <div class="top-bar">
+        <h1>Friends</h1>
+        <div class="location-pill">3 out tonight</div>
+      </div>
+      <div style="padding: 0 18px 18px;">
+        <div class="section-label" style="margin-bottom: 12px;">Out right now</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="archive-item">
+            <div class="avatar av1" style="width: 40px; height: 40px; font-size: 13px; margin: 0;">JR</div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 600;">Jake Reeves</div>
+              <div style="font-size: 12px; color: var(--green-mid);">📍 The Rusty Anchor · 30 min ago</div>
+            </div>
+          </div>
+          <div class="archive-item">
+            <div class="avatar av2" style="width: 40px; height: 40px; font-size: 13px; margin: 0;">KM</div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 600;">Kim Marsh</div>
+              <div style="font-size: 12px; color: var(--green-mid);">📍 Craft &amp; Crown · 12 min ago</div>
+            </div>
+          </div>
+          <div class="archive-item">
+            <div class="avatar av3" style="width: 40px; height: 40px; font-size: 13px; margin: 0;">TL</div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 600;">Tom Liu</div>
+              <div style="font-size: 12px; color: var(--green-mid);">📍 The Rusty Anchor · 18 min ago</div>
+            </div>
+          </div>
+        </div>
+        <div class="section-label" style="margin: 22px 0 12px;">All friends</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="archive-item">
+            <div class="avatar av4" style="width: 40px; height: 40px; font-size: 13px; margin: 0;">AS</div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 600;">Ava Santos</div>
+              <div style="font-size: 12px; color: var(--muted);">In tonight</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('discover')"><span class="nav-icon">🗺</span><span>Discover</span></button>
+      <button class="nav-btn" onclick="goTo('forecast')"><span class="nav-icon">📊</span><span>Forecast</span></button>
+      <button class="nav-btn post-btn" onclick="goTo('post')"><span class="nav-icon">+</span></button>
+      <button class="nav-btn active" onclick="goTo('friends')"><span class="nav-icon">👥</span><span>Friends</span></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span>You</span></button>
+    </div>
+  </div>
+
+  <!-- PROFILE SCREEN -->
+  <div class="screen" id="screen-profile">
+    <div class="screen-body">
+      <div class="profile-header">
+        <div class="profile-avatar">DK</div>
+        <div class="profile-name">Devin King</div>
+        <div class="profile-handle">@devin · joined April 2026</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-tile">
+          <div class="stat-tile-num">23</div>
+          <div class="stat-tile-label">Check-ins</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-tile-num">11</div>
+          <div class="stat-tile-label">Bars</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-tile-num">4</div>
+          <div class="stat-tile-label">Streak</div>
+        </div>
+      </div>
+      <div style="padding: 0 18px;">
+        <div class="section-label" style="margin-bottom: 12px;">Your Night, Archived</div>
+      </div>
+      <div class="archive-list">
+        <div class="archive-item">
+          <div class="archive-date">Apr 26</div>
+          <div style="flex: 1;">
+            <div class="archive-bar">The Rusty Anchor</div>
+            <div class="archive-meta">With Jake, Kim · 3 photos</div>
+          </div>
+          <div style="font-size: 18px;">🔥</div>
+        </div>
+        <div class="archive-item">
+          <div class="archive-date">Apr 19</div>
+          <div style="flex: 1;">
+            <div class="archive-bar">Craft &amp; Crown</div>
+            <div class="archive-meta">Solo · 1 photo</div>
+          </div>
+          <div style="font-size: 18px;">😊</div>
+        </div>
+        <div class="archive-item">
+          <div class="archive-date">Apr 12</div>
+          <div style="flex: 1;">
+            <div class="archive-bar">The Rusty Anchor</div>
+            <div class="archive-meta">With Tom, Ava · 5 photos</div>
+          </div>
+          <div style="font-size: 18px;">💃</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('discover')"><span class="nav-icon">🗺</span><span>Discover</span></button>
+      <button class="nav-btn" onclick="goTo('forecast')"><span class="nav-icon">📊</span><span>Forecast</span></button>
+      <button class="nav-btn post-btn" onclick="goTo('post')"><span class="nav-icon">+</span></button>
+      <button class="nav-btn" onclick="goTo('friends')"><span class="nav-icon">👥</span><span>Friends</span></button>
+      <button class="nav-btn active" onclick="goTo('profile')"><span class="nav-icon">👤</span><span>You</span></button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // Bar data
+  const BARS = [
+    { id: 1, name: "The Rusty Anchor", type: "Sports bar", distance: "0.3 mi", score: 8.4,
+      crowd: "Busy", crowdClass: "good", cover: "Free", coverClass: "good", line: "~5 min", lineClass: "good",
+      friends: ["JR", "KM", "TL"], live: true,
+      forecast: [
+        { hour: "9p", busy: 32 },
+        { hour: "10p", busy: 68 },
+        { hour: "11p", busy: 88 },
+        { hour: "12a", busy: 95 },
+      ]
+    },
+    { id: 2, name: "Craft & Crown", type: "Cocktail bar", distance: "0.6 mi", score: 9.1,
+      crowd: "Packed", crowdClass: "mid", cover: "$10", coverClass: "mid", line: "~25 min", lineClass: "bad",
+      friends: ["KM"], live: true,
+      forecast: [
+        { hour: "9p", busy: 45 },
+        { hour: "10p", busy: 78 },
+        { hour: "11p", busy: 96 },
+        { hour: "12a", busy: 90 },
+      ]
+    },
+    { id: 3, name: "The Tap House", type: "Brewery", distance: "0.8 mi", score: 7.6,
+      crowd: "Chill", crowdClass: "good", cover: "Free", coverClass: "good", line: "None", lineClass: "good",
+      friends: [], live: false,
+      forecast: [
+        { hour: "9p", busy: 22 },
+        { hour: "10p", busy: 40 },
+        { hour: "11p", busy: 55 },
+        { hour: "12a", busy: 48 },
+      ]
+    },
+    { id: 4, name: "Neon Underground", type: "Club", distance: "1.1 mi", score: 8.0,
+      crowd: "Packed", crowdClass: "mid", cover: "$15", coverClass: "bad", line: "~30 min", lineClass: "bad",
+      friends: ["AS"], live: true,
+      forecast: [
+        { hour: "9p", busy: 18 },
+        { hour: "10p", busy: 55 },
+        { hour: "11p", busy: 85 },
+        { hour: "12a", busy: 98 },
+      ]
+    },
+  ];
+
+  // Render bar card
+  function renderBarCard(bar) {
+    const friendsHtml = bar.friends.length > 0
+      ? `<div class="friends-here">
+          <div class="avatar-stack">
+            ${bar.friends.map((f, i) => `<div class="avatar av${(i % 4) + 1}">${f}</div>`).join("")}
+          </div>
+          <span>${bar.friends.length} friend${bar.friends.length > 1 ? "s" : ""} here</span>
+        </div>`
+      : `<div class="friends-here" style="color: var(--faint);">No friends here yet</div>`;
+    const liveHtml = bar.live ? `<span class="live-badge">LIVE</span>` : `<span></span>`;
+    return `
+      <div class="bar-card" onclick="openDetail(${bar.id})">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">${bar.name}</div>
+            <div class="bar-type">${bar.type} · ${bar.distance}</div>
+          </div>
+          <div class="vibe-score">
+            <div class="score-num">${bar.score}</div>
+            <div class="score-label">Vibe</div>
+          </div>
+        </div>
+        <div class="bar-stats">
+          <div class="stat-box">
+            <div class="stat-label">Crowd</div>
+            <div class="stat-val ${bar.crowdClass}">${bar.crowd}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Cover</div>
+            <div class="stat-val ${bar.coverClass}">${bar.cover}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Line</div>
+            <div class="stat-val ${bar.lineClass}">${bar.line}</div>
+          </div>
+        </div>
+        <div class="bar-footer">
+          ${friendsHtml}
+          ${liveHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // Render forecast card
+  function renderForecastCard(bar) {
+    const max = 100;
+    const cells = bar.forecast.map(f => `
+      <div class="forecast-cell">
+        <div class="forecast-hour">${f.hour}</div>
+        <div class="forecast-bar-wrap">
+          <div class="forecast-bar" style="height: ${f.busy}%; background: ${f.busy > 80 ? 'var(--red)' : f.busy > 60 ? 'var(--amber)' : 'var(--green)'};"></div>
+        </div>
+        <div class="forecast-pct">${f.busy}%</div>
+      </div>
+    `).join("");
+    const peak = bar.forecast.reduce((a, b) => a.busy > b.busy ? a : b);
+    return `
+      <div class="bar-card" onclick="openDetail(${bar.id})">
+        <div class="bar-top">
+          <div>
+            <div class="bar-name">${bar.name}</div>
+            <div class="bar-type">${bar.type} · ${bar.distance}</div>
+          </div>
+          <div class="vibe-score">
+            <div class="score-num">${bar.score}</div>
+            <div class="score-label">Vibe</div>
+          </div>
+        </div>
+        <div class="forecast-row">${cells}</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5;">
+          Peaks at <strong style="color: var(--text);">${peak.hour} (${peak.busy}%)</strong> · best time: <strong style="color: var(--green-mid);">before 10pm</strong>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render detail forecast (small inline)
+  function renderDetailForecast(bar) {
+    return bar.forecast.map(f => `
+      <div class="forecast-cell">
+        <div class="forecast-hour">${f.hour}</div>
+        <div class="forecast-bar-wrap">
+          <div class="forecast-bar" style="height: ${f.busy}%; background: ${f.busy > 80 ? 'var(--red)' : f.busy > 60 ? 'var(--amber)' : 'var(--green)'};"></div>
+        </div>
+        <div class="forecast-pct">${f.busy}%</div>
+      </div>
+    `).join("");
+  }
+
+  // Initial render
+  document.getElementById("bar-list").innerHTML = BARS.map(renderBarCard).join("");
+  document.getElementById("forecast-list").innerHTML = BARS.map(renderForecastCard).join("");
+  document.getElementById("detail-forecast").innerHTML = renderDetailForecast(BARS[0]);
+
+  // Navigation
+  function goTo(screenId) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById("screen-" + screenId).classList.add("active");
+  }
+
+  function openDetail(barId) {
+    const bar = BARS.find(b => b.id === barId);
+    if (!bar) return;
+    document.getElementById("detail-name").innerText = bar.name;
+    document.getElementById("detail-sub").innerText = `${bar.type} · ${bar.distance} · Open till 2am`;
+    document.getElementById("detail-forecast").innerHTML = renderDetailForecast(bar);
+    goTo("detail");
+  }
+
+  // Filter chips
+  document.querySelectorAll(".filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("on"));
+      chip.classList.add("on");
+    });
+  });
+
+  // Vibe emoji
+  function selectVibe(el) {
+    document.querySelectorAll(".vibe-emoji").forEach(e => e.classList.remove("sel"));
+    el.classList.add("sel");
+  }
+
+  // Deeper rating toggle
+  function toggleDeeper() {
+    const section = document.getElementById("slider-section");
+    const toggle = document.getElementById("deeper-toggle");
+    section.classList.toggle("show");
+    toggle.innerText = section.classList.contains("show") ? "− Hide deeper rating" : "+ Add a deeper rating (optional)";
+  }
+
+  // One-tap check-in
+  function oneTapCheckin() {
+    showToast("Checked in at The Rusty Anchor 🍻");
+    setTimeout(() => goTo("discover"), 1200);
+  }
+
+  function submitDeep() {
+    showToast("Deep rating submitted ✓");
+    setTimeout(() => goTo("discover"), 1200);
+  }
+
+  // Toast
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1800);
+  }
+</script>
+</body>
+</html>
